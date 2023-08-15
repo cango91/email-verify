@@ -27,7 +27,13 @@ INSTALLED_APPS = [
 ]
 ```
 
-**Setting up defaults:**
+Once you add the app to your INSTALLED_APPS, you might notice you have a new migration available. email-verify establishes a one-to-one relation with the built-in User model (from django.contrib.auth.models).
+
+You can apply migrations via:
+
+`python manage.py migrate`
+
+**Setting up default send function:**
 
 email-verify is designed work out-of-the-box with Django's SMTP backend. If you want to keep to defaults, make sure to add the following configuration to your settings (assuming the hostname, host user and password are kept in environment variables):
 ```py
@@ -41,6 +47,8 @@ EMAIL_USE_TLS = True # or False, depending on your host configuration
 ```
 
 The above is the standard configuration for Django's SMTP backend.
+
+**Providing a custom send function:**
 
 If you don't want to use Django's default SMTP backend or have a specific function you'd rather use, provide the function in `EMAIL_VERIFY_SEND_FUNC` in your `settings.py`. The function provided should accept 2 arguments: user and verification_link. You can access user's e-mail through `user.email`.
 
@@ -57,3 +65,13 @@ def custom_send_email(user,verification_link):
 EMAIL_VERIFY_SEND_FUNC = custom_send_email
 ```
 
+### usage
+
+email-verify creates a one-to-one relation with the built-in User model. Every time a new User is created and saved, email-verify will create a new EmailVerify record with is_verified set to false. On its own this has no effect on your project, except modifying your User model with an EmailVerify relation.
+
+There is a couple of ways you can use email-verify:
++ If you're using `UserCreationForm` you can instead use `UserCreationFormWithEmailValidation` for automatically handling e-mail verification.
+<blockquote>
+    `UserCreationFormWithEmailValidation` overwrites `save` and `is_valid` methods of `UserCreationForm`. If your project makes use of overwriting these methods as well, be sure to check the source code in `forms.py` to decide if you want to add functionality from email-verify in your modified methods.
+</blockquote>
++ Import views and utility functions as needed.
