@@ -1,9 +1,6 @@
+from django.utils.timezone import now
 from itsdangerous.url_safe import URLSafeTimedSerializer
-from itsdangerous import SignatureExpired
-from itsdangerous import timed
 from django.conf import settings
-from .models import EmailVerification
-from .exceptions import *
 import json
 
 def generate_token(user, domain=None):
@@ -15,27 +12,36 @@ def generate_token(user, domain=None):
 
 
 def verify_token(token):
+    from .models import EmailVerification
+    from itsdangerous import SignatureExpired, BadSignature
     s = URLSafeTimedSerializer(settings.SECRET_KEY)
+    expires = getattr(settings, 'EMAIL_VERIFY_EXPIRES_IN', 3600)
+    expires = expires if expires > 0 else None
     try:
-        expires = getattr(settings,'EMAIL_VERIFY_EXPIRES_IN',3600)
         str = s.loads(token, max_age=expires)
         data = json.loads(str)
     except SignatureExpired:
-        raise TokenExpired("Token has expired.")
-    except:
-        return None
+        return (False, "Token has expired.")
+    except BadSignature:
+        return (False, "Invalid token.")
+
     domain = data.get('domain')
     user_id = data.get('user_id')
+    
     if not settings.DEBUG and domain not in settings.ALLOWED_HOSTS:
-        raise InvalidDomain("Invalid domain.")
+        return (False, "Invalid domain.")
+
     if user_id:
         try:
             email_verification = EmailVerification.objects.get(user__id=user_id)
             if email_verification.is_verified:
-                raise AlreadyVerified()
+                return (False, "Already verified.")
+            
             email_verification.is_verified = True
+            email_verification.verified_date = now()
             email_verification.save()
-            return True
+            return (True, None)
         except EmailVerification.DoesNotExist:
-            return None
-    return None
+            return (False, "Email verification does not exist.")
+
+    return (False, "Unknown error.")
