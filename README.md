@@ -161,6 +161,12 @@ If you're using non-http and non-https ports in production, in order for a valid
 If you're using `django_on_heroku`, the `ALLOWED_HOSTS=['*']` overwrite is breaking. You can either disable the allowed_hosts modification of `django_on_heroku` or (added in 0.1.6) provide a host via `EMAIL_VERIFY_ALLOWED_HOST` literal in `settings.py` which `email_verify.utils.verify_token` will use to check against the unsigned token's domain. You will still have to provide a request object or a domain string to the downstream functions to correctly get a domain for signing. You can provide a string in `EMAIL_VERIFY_USE_DOMAIN` literal to coerce internal functions to use the given domain. This will take precedence over all other methods except providing a domain to the functions directly.
 
 ## Changelog
+### v0.1.10 (hotfix)
++ Broken username fix
+### v0.1.9 (hotfix)
++ Broken domain verification logic fix
+### v0.1.8 (hotfix)
++ 0.1.7 did not work as intended
 ### v0.1.7 (hotfix)
 + If username field exists, set ordering to show it on top.
 ### v0.1.6

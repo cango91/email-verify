@@ -32,7 +32,7 @@ def verify_token(token):
     ev_allowed_host = getattr(settings,'EMAIL_VERIFY_ALLOWED_HOST',None)
     domain_valid = domain in settings.ALLOWED_HOSTS or (ev_allowed_host and domain == ev_allowed_host)
     
-    if not settings.DEBUG and domain_valid:
+    if not settings.DEBUG and not domain_valid:
         return (False, "Invalid domain.")
 
     if user_id:

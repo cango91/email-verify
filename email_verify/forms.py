@@ -1,3 +1,4 @@
+from collections import OrderedDict
 from django import forms
 from django.contrib.auth import get_user_model
 from django.contrib.auth.forms import UserCreationForm
@@ -14,7 +15,12 @@ class EmailVerificationUserCreationForm(UserCreationForm):
         User = get_user_model()
         if 'username' in [field.name for field in User._meta.fields]:
             self.fields['username'] = forms.CharField(max_length=30)
-            self.field_order = ['username', 'email', 'password1', 'password2']
+            new_order = OrderedDict()
+            new_order['username'] = self.fields['username']
+            for key, value in self.fields.items():
+                if key != 'username':
+                    new_order[key] = value
+            self.fields = new_order
 
     def clean_email(self):
         email = self.cleaned_data.get('email', None)
@@ -27,6 +33,9 @@ class EmailVerificationUserCreationForm(UserCreationForm):
 
     def save(self, commit=True, request=None):
         user = super().save(commit=False)
+        username_field_name = 'username'
+        if username_field_name in self.cleaned_data:
+            setattr(user, username_field_name, self.cleaned_data[username_field_name])
         if commit:
             user.save()
         return user
