@@ -18,7 +18,7 @@ def default_send_email(user, verification_link):
     send_mail(subject, message.replace('$:_VERIFICATION_LINK',verification_link), from_email, recipient_list, html_message=html_message.replace('$:_VERIFICATION_LINK',verification_link))
     
 def send_verification_email(user, send_email_func, request=None,domain=None):
-    if not domain:
+    if domain is None and getattr(settings,'EMAIL_VERIFY_USE_DOMAIN',None) is None:
         # Use the request object if provided, otherwise fall back to ALLOWED_HOSTS
         if request:
             current_site = get_current_site(request)
@@ -29,13 +29,16 @@ def send_verification_email(user, send_email_func, request=None,domain=None):
         else:
             if settings.DEBUG:
                 domain = settings.ALLOWED_HOSTS[0] if settings.ALLOWED_HOSTS else 'localhost'
-                domain = 'localhost' if domain == '*' else domain
                 port = settings.DEBUG_PORT if hasattr(settings, 'DEBUG_PORT') else '8000'
                 domain += f":{port}"
             elif settings.ALLOWED_HOSTS:
                 domain = settings.ALLOWED_HOSTS[0]
             else:
                 raise InvalidDomainException("Couldn't resolve domain for token. If DEBUG is set to false ALLOWED_HOSTS[0] must be set or request object should be passed to function send_verification_email")
+    elif not domain:
+        domain = getattr(settings,'EMAIL_VERIFY_USE_DOMAIN',None)
+        if not domain:
+            raise InvalidDomainException("Couldn't resolve domain for token.")
     
     try:
         token = generate_token(user, domain=domain)

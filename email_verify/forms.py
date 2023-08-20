@@ -1,12 +1,19 @@
-from django.contrib.auth.models import User
+from django import forms
+from django.contrib.auth import get_user_model
 from django.contrib.auth.forms import UserCreationForm
 from django.core.exceptions import ValidationError
 from django.core.validators import EmailValidator
 
 class EmailVerificationUserCreationForm(UserCreationForm):
     class Meta:
-        model = User
-        fields = ('username','email')
+        model = get_user_model()
+        fields = ('email',)
+        
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        User = get_user_model()
+        if 'username' in [field.name for field in User._meta.fields]:
+            self.fields['username'] = forms.CharField(max_length=30)
 
     def clean_email(self):
         email = self.cleaned_data.get('email', None)

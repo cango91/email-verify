@@ -4,6 +4,7 @@ from django.conf import settings
 import json
 
 def generate_token(user, domain=None):
+    domain = domain or getattr(settings,'EMAIL_VERIFY_USE_DOMAIN',None)
     if domain is None and not settings.DEBUG:
         raise ValueError("Domain must be provided in production environment.")
     s = URLSafeTimedSerializer(settings.SECRET_KEY)
@@ -28,7 +29,10 @@ def verify_token(token):
     domain = data.get('domain')
     user_id = data.get('user_id')
     
-    if not settings.DEBUG and domain not in settings.ALLOWED_HOSTS:
+    ev_allowed_host = getattr(settings,'EMAIL_VERIFY_ALLOWED_HOST',None)
+    domain_valid = domain in settings.ALLOWED_HOSTS or (ev_allowed_host and domain == ev_allowed_host)
+    
+    if not settings.DEBUG and domain_valid:
         return (False, "Invalid domain.")
 
     if user_id:
