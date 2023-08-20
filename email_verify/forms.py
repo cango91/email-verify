@@ -14,6 +14,7 @@ class EmailVerificationUserCreationForm(UserCreationForm):
         User = get_user_model()
         if 'username' in [field.name for field in User._meta.fields]:
             self.fields['username'] = forms.CharField(max_length=30)
+            self.field_order = ['username', 'email', 'password1', 'password2']
 
     def clean_email(self):
         email = self.cleaned_data.get('email', None)
